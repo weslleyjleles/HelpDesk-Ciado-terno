@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "titulo": "Erro Windows",
+        "descricao": "Erro na ativa\u00e7\u00e3o do windows",
+        "prioridade": "Baixa",
+        "responsavel": "weslley",
+        "data_abertura": "16/06/2025 16:28",
+        "status": "Aberto"
+    },
+    {
+        "id": 2,
+        "titulo": "erro impressora",
+        "descricao": "Impressora nao emite",
+        "prioridade": "Media",
+        "responsavel": "Aloisio",
+        "data_abertura": "16/06/2025 16:28",
+        "status": "Aberto"
+    }
+]
