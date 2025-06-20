@@ -9,6 +9,36 @@
             "descricao": "Erro ao visualizar arquivos no ]\nSenior",
             "status": "Aberto",
             "resposta": ""
+        },
+        {
+            "usuario": "Dp02",
+            "nome": "Dp02",
+            "setor": "Dp",
+            "data": "20/06/2025 11:08",
+            "anexo": "C:/Users/weslley.leles/Pictures/paraiba-erro.png",
+            "descricao": "Erro ao abrir portal NFCE",
+            "status": "Fechado",
+            "resposta": "Erro relacioando a indisponibilidade na sefaz, foi corrigido"
+        },
+        {
+            "usuario": "Dp02",
+            "nome": "Dp02",
+            "setor": "Dp",
+            "data": "20/06/2025 11:15",
+            "anexo": "C:/Users/weslley.leles/Pictures/1738694067347.jpg",
+            "descricao": "Erro ao Anexar documentos",
+            "status": "Fechado",
+            "resposta": "Corrigido o erro após atualização"
+        },
+        {
+            "usuario": "Dp02",
+            "nome": "Dp02",
+            "setor": "Dp",
+            "data": "20/06/2025 11:40",
+            "anexo": "C:/Users/weslley.leles/Pictures/BOLETO.png",
+            "descricao": "Erro ao abrir Tef",
+            "status": "Aberto",
+            "resposta": ""
         }
     ]
 }

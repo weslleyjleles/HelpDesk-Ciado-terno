@@ -7,7 +7,7 @@
             "data": "17/06/2025 11:39",
             "anexo": "anexos\\Captura de tela 2025-04-03 145447.png",
             "status": "Fechado",
-            "resposta": "erro foi corrigido com sucesso"
+            "resposta": "terno preto 56"
         },
         {
             "usuario": "Loja100",
@@ -110,6 +110,16 @@
             "descricao": "Erro ao efetuar vendas no caixa.\nCartão não passa",
             "status": "Fechado",
             "resposta": "Erro corrigido após atuação.\nGrato  Weslley.leles"
+        },
+        {
+            "usuario": "Dp02",
+            "nome": "Dp02",
+            "setor": "Dp",
+            "data": "20/06/2025 10:33",
+            "anexo": "C:/Users/weslley.leles/Pictures/Captura de tela 2025-02-10 160240.png",
+            "descricao": "Erro ao abri tela do senior",
+            "status": "Fechado",
+            "resposta": "Errro corrigido apos atualização do navegador"
         }
     ]
 }
