@@ -61,23 +61,23 @@ def abrir_admin(janela_pai=None):
             return
 
         if filtro:
-            chamados = [c for c in chamados if filtro.lower() in c["titulo"].lower() or filtro.lower() in c["descricao"].lower()]
+            chamados = [c for c in chamados if filtro.lower() in c.get("titulo", "").lower() or filtro.lower() in c.get("descricao", "").lower()]
 
         if status != "Todos":
-            chamados = [c for c in chamados if c["status"].lower() == status.lower()]
+            chamados = [c for c in chamados if c.get("status", "").lower() == status.lower()]
 
         label_contador.configure(text=f"Chamados encontrados: {len(chamados)}")
 
-        for chamado in sorted(chamados, key=lambda x: x["data"], reverse=True):
-            status_icone = "🟢" if chamado["status"] == "Aberto" else "🔴"
-            anexo = "📎" if chamado["anexo"] else ""
-            texto = f"{status_icone} {chamado['data']} | {chamado['usuario']} | {chamado['titulo']} | {chamado['status']} {anexo}"
+        for chamado in sorted(chamados, key=lambda x: x.get("data", ""), reverse=True):
+            status_icone = "🟢" if chamado.get("status") == "Aberto" else "🔴"
+            anexo = "📎" if chamado.get("anexo") else ""
+            texto = f"{status_icone} {chamado.get('data', '')} | {chamado.get('usuario', '')} | {chamado.get('titulo', '')} | {chamado.get('status', '')} {anexo}"
 
             btn = customtkinter.CTkButton(
                 frame_chamados,
                 text=texto,
                 anchor="w",
-                command=lambda c=chamado: abrir_detalhes(c)  # <-- Correção aqui!
+                command=lambda c=chamado: abrir_detalhes(c)
             )
             btn.pack(fill="x", pady=2)
 
@@ -90,23 +90,33 @@ def abrir_admin(janela_pai=None):
         janela_detalhes.after(10, lambda: janela_detalhes.attributes("-topmost", False))
         janela_detalhes.grab_set()
 
-        texto = f"Usuário: {c['usuario']}\nData: {c['data']}\n\nDescrição do Chamado:\n{c['descricao']}"
+        usuario = str(c.get("usuario", "") or "")
+        data = str(c.get("data", "") or "")
+        descricao = str(c.get("descricao", "") or "")
+
+        texto = f"Usuário: {usuario}\nData: {data}\n\nDescrição do Chamado:\n{descricao}"
         label_info = customtkinter.CTkLabel(janela_detalhes, text=texto, justify="left", anchor="w", wraplength=580)
         label_info.pack(padx=10, pady=10, fill="x")
 
-        if c["anexo"] and os.path.exists(c["anexo"]):
-            imagem = customtkinter.CTkImage(Image.open(c["anexo"]), size=(300, 200))
-            img_label = customtkinter.CTkLabel(janela_detalhes, image=imagem, text="")
-            img_label.image = imagem
-            img_label.configure(cursor="hand2")
-            img_label.pack(pady=10)
-            img_label.bind("<Button-1>", lambda e: abrir_imagem_sistema(c["anexo"]))
+        anexo_path = c.get("anexo", "")
+        if anexo_path and os.path.exists(anexo_path):
+            try:
+                imagem = customtkinter.CTkImage(Image.open(anexo_path), size=(300, 200))
+                img_label = customtkinter.CTkLabel(janela_detalhes, image=imagem, text="")
+                img_label.image = imagem
+                img_label.configure(cursor="hand2")
+                img_label.pack(pady=10)
+                img_label.bind("<Button-1>", lambda e: abrir_imagem_sistema(anexo_path))
+            except Exception as e:
+                messagebox.showwarning("Imagem", f"Erro ao carregar imagem: {e}")
 
         customtkinter.CTkLabel(janela_detalhes, text="Resposta do Administrador:", anchor="w").pack(padx=10, pady=(10, 2), fill="x")
 
         campo_resposta = customtkinter.CTkTextbox(janela_detalhes, height=200)
         campo_resposta.pack(padx=10, pady=5, fill="both", expand=True)
-        campo_resposta.insert("1.0", c.get("resposta", ""))
+
+        resposta = str(c.get("resposta", "") or "")
+        campo_resposta.insert("1.0", resposta)
 
         def salvar_resposta():
             salvar_resposta_chamado(c["id"], campo_resposta.get("1.0", "end").strip())
@@ -126,9 +136,9 @@ def abrir_admin(janela_pai=None):
 
         customtkinter.CTkButton(janela_detalhes, text="Salvar Resposta", command=salvar_resposta).pack(pady=5)
 
-        if c["status"] == "Aberto":
+        if c.get("status") == "Aberto":
             customtkinter.CTkButton(janela_detalhes, text="Marcar como Fechado", command=fechar_chamado).pack(pady=5)
-        elif c["status"] == "Fechado":
+        elif c.get("status") == "Fechado":
             customtkinter.CTkButton(janela_detalhes, text="Reabrir Chamado", command=reabrir_chamado).pack(pady=5)
 
     carregar_lista()
