@@ -1,10 +1,9 @@
 import customtkinter
 import os
-import json
-import datetime
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
-from util import salvar_chamados, carregar_chamados
+from util import salvar_chamado_sql, carregar_chamados_sql
+
 
 def abrir_cliente(usuario):
     janela_cliente = customtkinter.CTk()
@@ -17,6 +16,9 @@ def abrir_cliente(usuario):
 
     label_titulo = customtkinter.CTkLabel(frame_principal, text="Abrir Chamado", font=("Arial", 18))
     label_titulo.pack(pady=10)
+
+    entry_titulo = customtkinter.CTkEntry(frame_principal, placeholder_text="Título do Chamado", width=400)
+    entry_titulo.pack(pady=5)
 
     entry_setor = customtkinter.CTkEntry(frame_principal, placeholder_text="Setor", width=400)
     entry_setor.pack(pady=5)
@@ -41,55 +43,47 @@ def abrir_cliente(usuario):
     btn_anexo.pack(pady=2)
 
     def enviar_chamado():
+        titulo = entry_titulo.get().strip()
         setor = entry_setor.get().strip()
         descricao = campo_descricao.get("1.0", "end").strip()
 
-        if not setor or not descricao:
-            messagebox.showwarning("Campos obrigatórios", "Preencha o setor e a descrição.")
+        if not titulo or not setor or not descricao:
+            messagebox.showwarning("Campos obrigatórios", "Preencha o título, setor e a descrição.")
             return
 
-        chamados = carregar_chamados()
-
-        novo_chamado = {
-            "usuario": usuario,
-            "nome": usuario,
-            "setor": setor,
-            "data": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "anexo": caminho_imagem,
-            "descricao": descricao,
-            "status": "Aberto",
-            "resposta": ""
-        }
-
-        chamados.append(novo_chamado)
-        salvar_chamados(chamados)
-
-        messagebox.showinfo("Chamado enviado", "Seu chamado foi enviado com sucesso.")
-        entry_setor.delete(0, "end")
-        campo_descricao.delete("1.0", "end")
-        label_anexo.configure(text="Nenhuma imagem selecionada")
-        carregar_historico()
+        try:
+            salvar_chamado_sql(titulo, descricao, caminho_imagem, usuario)
+            messagebox.showinfo("Chamado enviado", "Seu chamado foi enviado com sucesso.")
+            entry_titulo.delete(0, "end")
+            entry_setor.delete(0, "end")
+            campo_descricao.delete("1.0", "end")
+            campo_descricao.insert("1.0", "Descreva o problema aqui...")
+            label_anexo.configure(text="Nenhuma imagem selecionada")
+            carregar_historico()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar chamado: {e}")
 
     btn_enviar = customtkinter.CTkButton(frame_principal, text="Enviar Chamado", command=enviar_chamado)
     btn_enviar.pack(pady=2)
 
-    # 🔍 Busca e filtro
-    entry_busca = customtkinter.CTkEntry(frame_principal, placeholder_text="Buscar chamados...", width=300)
-    entry_busca.pack(pady=5)
+    frame_filtros = customtkinter.CTkFrame(frame_principal, fg_color="transparent")
+    frame_filtros.pack(pady=10)
+
+    entry_busca = customtkinter.CTkEntry(frame_filtros, placeholder_text="Buscar chamados...", width=180)
+    entry_busca.pack(side="left", padx=5)
 
     status_var = customtkinter.StringVar(value="Todos")
-    filtro_status = customtkinter.CTkOptionMenu(frame_principal, values=["Todos", "Aberto", "Fechado"], variable=status_var)
-    filtro_status.pack(pady=2)
+    filtro_status = customtkinter.CTkComboBox(frame_filtros, values=["Todos", "Aberto", "Fechado"], variable=status_var, width=100)
+    filtro_status.pack(side="left", padx=5)
 
     def buscar_chamados():
         termo = entry_busca.get().strip().lower()
         status = status_var.get()
         carregar_historico(filtro=termo, status=status)
 
-    btn_buscar = customtkinter.CTkButton(frame_principal, text="Buscar", command=buscar_chamados)
-    btn_buscar.pack(pady=5)
+    btn_buscar = customtkinter.CTkButton(frame_filtros, text="Buscar", command=buscar_chamados)
+    btn_buscar.pack(side="left", padx=5)
 
-    # 📜 Histórico
     label_historico = customtkinter.CTkLabel(frame_principal, text="Seus Chamados", font=("Arial", 16))
     label_historico.pack(pady=10)
 
@@ -100,33 +94,42 @@ def abrir_cliente(usuario):
         for widget in frame_historico.winfo_children():
             widget.destroy()
 
-        chamados = carregar_chamados()
-        chamados_usuario = [c for c in chamados if c["usuario"] == usuario]
+        try:
+            chamados = carregar_chamados_sql()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao carregar chamados: {e}")
+            return
+
+        chamados_usuario = [c for c in chamados if c[6] == usuario]
+
+        chamados_dict = [{
+            "id": c[0],
+            "titulo": c[1],
+            "descricao": c[2],
+            "anexo": c[3],
+            "data": str(c[4])[:16],
+            "status": c[5],
+            "usuario": c[6],
+            "resposta": c[7] if len(c) > 7 else ""
+        } for c in chamados_usuario]
 
         if filtro:
-            chamados_usuario = [
-                c for c in chamados_usuario if
-                filtro in c.get("setor", "").lower() or
-                filtro in c.get("descricao", "").lower() or
-                filtro in c.get("status", "").lower()
-            ]
+            chamados_dict = [c for c in chamados_dict if filtro in c["titulo"].lower() or filtro in c["descricao"].lower()]
 
         if status != "Todos":
-            chamados_usuario = [c for c in chamados_usuario if c.get("status", "") == status]
+            chamados_dict = [c for c in chamados_dict if c["status"] == status]
 
-        if not chamados_usuario:
+        if not chamados_dict:
             label_vazio = customtkinter.CTkLabel(frame_historico, text="Nenhum chamado encontrado.")
             label_vazio.pack()
             return
 
-        for chamado in chamados_usuario[::-1]:
-            resposta = chamado.get("resposta", "").strip()
-            resposta_texto = f"\nResposta: {resposta}" if resposta else "\nResposta: Ainda não respondido"
-
-            texto = f"Título: {chamado.get('setor', '')}\n" \
-                    f"Data: {chamado.get('data', '')}\n" \
-                    f"Descrição: {chamado.get('descricao', '')}\n" \
-                    f"Status: {chamado.get('status', '')}{resposta_texto}"
+        for chamado in chamados_dict[::-1]:
+            texto = f"Título: {chamado['titulo']}\n" \
+                    f"Data: {chamado['data']}\n" \
+                    f"Descrição: {chamado['descricao']}\n" \
+                    f"Status: {chamado['status']}\n" \
+                    f"Resposta: {chamado['resposta'] or 'Aguarde resposta do administrador'}"
 
             frame_chamado = customtkinter.CTkFrame(frame_historico)
             frame_chamado.pack(pady=5, padx=10, fill="x", expand=True)
@@ -140,8 +143,7 @@ def abrir_cliente(usuario):
             )
             label_chamado.pack(padx=10, pady=5, anchor="w")
 
-            # 🖼 Exibe imagem anexa
-            if chamado.get("anexo") and os.path.exists(chamado["anexo"]):
+            if chamado["anexo"] and os.path.exists(chamado["anexo"]):
                 imagem = customtkinter.CTkImage(Image.open(chamado["anexo"]), size=(100, 100))
                 img_label = customtkinter.CTkLabel(frame_chamado, image=imagem, text="")
                 img_label.image = imagem

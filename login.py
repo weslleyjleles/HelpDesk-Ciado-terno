@@ -1,39 +1,17 @@
 import customtkinter
 from tkinter import messagebox, simpledialog
-import json
+import sqlite3
 from admin import abrir_admin
 from cliente import abrir_cliente
+from db import conectar
 
 class LoginApp:
-    ARQUIVO_USUARIOS = "usuarios.json"
-
     def __init__(self, frame_pai, janela_login):
         self.frame_pai = frame_pai
         self.janela_login = janela_login
-        self.usuarios_clientes = self.carregar_usuarios()
         self.criar_interface()
 
-    def carregar_usuarios(self):
-        try:
-            with open(self.ARQUIVO_USUARIOS, "r", encoding="utf-8") as f:
-                dados = json.load(f)
-            return dados.get("clientes", {})
-        except FileNotFoundError:
-            return {}
-        except json.JSONDecodeError:
-            messagebox.showerror("Erro", "Erro ao ler o arquivo JSON.")
-            return {}
-
-    def salvar_usuarios(self):
-        dados = {"clientes": self.usuarios_clientes}
-        try:
-            with open(self.ARQUIVO_USUARIOS, "w", encoding="utf-8") as f:
-                json.dump(dados, f, indent=4)
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao salvar arquivo: {e}")
-
     def criar_interface(self):
-        # Limpa frame
         for widget in self.frame_pai.winfo_children():
             widget.destroy()
 
@@ -53,12 +31,18 @@ class LoginApp:
         usuario = self.entry_usuario.get()
         senha = self.entry_senha.get()
 
-        if usuario == "admin" and senha == "1234":
-            self.janela_login.destroy()
-            abrir_admin()
-        elif usuario in self.usuarios_clientes and self.usuarios_clientes[usuario] == senha:
-            self.janela_login.destroy()
-            abrir_cliente(usuario)
+        conn = conectar()
+        cursor = conn.cursor()
+        cursor.execute("SELECT tipo FROM Usuarios WHERE login=? AND senha=?", (usuario, senha))
+        resultado = cursor.fetchone()
+        conn.close()
+
+        if resultado:
+            tipo = resultado[0]
+            if tipo == "admin":
+                self.janela_login.after(100, lambda: (self.janela_login.withdraw(), abrir_admin(self.janela_login)))
+            else:
+                self.janela_login.after(100, lambda: (self.janela_login.destroy(), abrir_cliente(usuario)))
         else:
             messagebox.showerror("Erro", "Usuário ou senha incorretos")
 
@@ -67,16 +51,23 @@ class LoginApp:
         if not usuario_novo:
             return
 
-        if usuario_novo in self.usuarios_clientes:
-            messagebox.showwarning("Aviso", "Usuário já existe!")
-            return
-
         senha_nova = simpledialog.askstring("Cadastro", "Digite a senha:", show="*")
         if not senha_nova:
             return
 
-        self.usuarios_clientes[usuario_novo] = senha_nova
-        self.salvar_usuarios()
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id FROM Usuarios WHERE login = ?", (usuario_novo,))
+        if cursor.fetchone():
+            conn.close()
+            messagebox.showwarning("Aviso", "Usuário já existe!")
+            return
+
+        cursor.execute("INSERT INTO Usuarios (nome, login, senha, tipo) VALUES (?, ?, ?, ?)", (usuario_novo, usuario_novo, senha_nova, "cliente"))
+        conn.commit()
+        conn.close()
+
         messagebox.showinfo("Sucesso", "Usuário cadastrado com sucesso!")
 
 def abrir_login(frame_direito, janela_login):
