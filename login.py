@@ -40,9 +40,12 @@ class LoginApp:
         if resultado:
             tipo = resultado[0]
             if tipo == "admin":
-                self.janela_login.after(100, lambda: (self.janela_login.withdraw(), abrir_admin(self.janela_login)))
+                self.janela_login.withdraw()
+                abrir_admin(self.janela_login)
             else:
-                self.janela_login.after(100, lambda: (self.janela_login.destroy(), abrir_cliente(usuario)))
+                self.janela_login.withdraw()
+                abrir_cliente(usuario, self.janela_login)
+
         else:
             messagebox.showerror("Erro", "Usuário ou senha incorretos")
 
@@ -64,11 +67,15 @@ class LoginApp:
             messagebox.showwarning("Aviso", "Usuário já existe!")
             return
 
-        cursor.execute("INSERT INTO Usuarios (nome, login, senha, tipo) VALUES (?, ?, ?, ?)", (usuario_novo, usuario_novo, senha_nova, "cliente"))
+        cursor.execute(
+            "INSERT INTO Usuarios (nome, login, senha, tipo) VALUES (?, ?, ?, ?)",
+            (usuario_novo, usuario_novo, senha_nova, "cliente")
+        )
         conn.commit()
         conn.close()
 
         messagebox.showinfo("Sucesso", "Usuário cadastrado com sucesso!")
 
+# 👇 Isso é fundamental para funcionar no main.py:
 def abrir_login(frame_direito, janela_login):
     LoginApp(frame_direito, janela_login)

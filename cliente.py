@@ -4,12 +4,22 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from util import salvar_chamado_sql, carregar_chamados_sql
 
+def abrir_cliente(usuario, janela_login):
+    # Oculta a janela principal
+    janela_login.withdraw()
 
-def abrir_cliente(usuario):
-    janela_cliente = customtkinter.CTk()
+    # Cria janela cliente como Toplevel
+    janela_cliente = customtkinter.CTkToplevel()
     janela_cliente.title("Painel do Cliente")
     janela_cliente.geometry("800x700")
     janela_cliente.resizable(False, False)
+
+    # Ao fechar, exibe novamente a janela principal
+    def ao_fechar():
+        janela_cliente.destroy()
+        janela_login.deiconify()
+
+    janela_cliente.protocol("WM_DELETE_WINDOW", ao_fechar)
 
     frame_principal = customtkinter.CTkFrame(janela_cliente)
     frame_principal.pack(padx=20, pady=20, fill="both", expand=True)
@@ -100,22 +110,11 @@ def abrir_cliente(usuario):
             messagebox.showerror("Erro", f"Erro ao carregar chamados: {e}")
             return
 
-        chamados_usuario = [c for c in chamados if c[6] == usuario]
-
-        chamados_dict = [{
-            "id": c[0],
-            "titulo": c[1],
-            "descricao": c[2],
-            "anexo": c[3],
-            "data": str(c[4])[:16],
-            "status": c[5],
-            "usuario": c[6],
-            "resposta": c[7] if len(c) > 7 else ""
-        } for c in chamados_usuario]
+        chamados_usuario = [c for c in chamados if c["usuario"] == usuario]
+        chamados_dict = chamados_usuario
 
         if filtro:
             chamados_dict = [c for c in chamados_dict if filtro in c["titulo"].lower() or filtro in c["descricao"].lower()]
-
         if status != "Todos":
             chamados_dict = [c for c in chamados_dict if c["status"] == status]
 
@@ -126,46 +125,41 @@ def abrir_cliente(usuario):
 
         for chamado in chamados_dict[::-1]:
             texto = f"Título: {chamado['titulo']}\n" \
-                    f"Data: {chamado['data']}\n" \
+                    f"Data: {str(chamado['data'])[:16]}\n" \
                     f"Descrição: {chamado['descricao']}\n" \
                     f"Status: {chamado['status']}\n" \
-                    f"Resposta: {chamado['resposta'] or 'Aguarde resposta do administrador'}"
+                    f"Resposta: {chamado.get('resposta', '') or 'Aguarde resposta do administrador'}"
 
             frame_chamado = customtkinter.CTkFrame(frame_historico)
             frame_chamado.pack(pady=5, padx=10, fill="x", expand=True)
 
-            label_chamado = customtkinter.CTkLabel(
-                frame_chamado,
-                text=texto,
-                anchor="w",
-                justify="left",
-                wraplength=680
-            )
+            label_chamado = customtkinter.CTkLabel(frame_chamado, text=texto, anchor="w", justify="left", wraplength=680)
             label_chamado.pack(padx=10, pady=5, anchor="w")
 
             if chamado["anexo"] and os.path.exists(chamado["anexo"]):
-                imagem = customtkinter.CTkImage(Image.open(chamado["anexo"]), size=(100, 100))
-                img_label = customtkinter.CTkLabel(frame_chamado, image=imagem, text="")
-                img_label.image = imagem
-                img_label.pack(pady=5, padx=10)
+                try:
+                    imagem = customtkinter.CTkImage(Image.open(chamado["anexo"]), size=(100, 100))
+                    img_label = customtkinter.CTkLabel(frame_chamado, image=imagem, text="")
+                    img_label.image = imagem
+                    img_label.pack(pady=5, padx=10)
 
-                def abrir_imagem(caminho=chamado["anexo"]):
-                    nova = customtkinter.CTkToplevel(janela_cliente)
-                    nova.title("Imagem Anexada")
-                    nova.geometry("600x600")
-                    nova.lift()
-                    nova.attributes("-topmost", True)
-                    nova.after(10, lambda: nova.attributes("-topmost", False))
-                    nova.grab_set()
+                    def abrir_imagem(caminho=chamado["anexo"]):
+                        nova = customtkinter.CTkToplevel(janela_cliente)
+                        nova.title("Imagem Anexada")
+                        nova.geometry("600x600")
+                        nova.lift()
+                        nova.attributes("-topmost", True)
+                        nova.after(10, lambda: nova.attributes("-topmost", False))
+                        nova.grab_set()
 
-                    img = Image.open(caminho)
-                    img.thumbnail((580, 580))
-                    img_tk = ImageTk.PhotoImage(img)
-                    lbl = customtkinter.CTkLabel(nova, image=img_tk, text="")
-                    lbl.image = img_tk
-                    lbl.pack(padx=10, pady=10)
+                        img = Image.open(caminho)
+                        img.thumbnail((580, 580))
+                        img_tk = ImageTk.PhotoImage(img)
+                        lbl = customtkinter.CTkLabel(nova, image=img_tk, text="")
+                        lbl.image = img_tk
+                        lbl.pack(padx=10, pady=10)
 
-                img_label.bind("<Button-1>", lambda e, caminho=chamado["anexo"]: abrir_imagem(caminho))
-
-    carregar_historico()
-    janela_cliente.mainloop()
+                    img_label.bind("<Button-1>", lambda e, caminho=chamado["anexo"]: abrir_imagem(caminho))
+                except Exception as e:
+                    print(f"Erro ao carregar imagem do anexo: {e}")
+                    continue

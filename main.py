@@ -17,6 +17,12 @@ def main():
     janela_login.title("Help Desk Cia do Terno")
     janela_login.resizable(False, False)
 
+    # Handler para fechamento da janela principal
+    def ao_fechar():
+        janela_login.destroy()
+
+    janela_login.protocol("WM_DELETE_WINDOW", ao_fechar)
+
     # Organização em grid (2 colunas)
     janela_login.grid_columnconfigure((0, 1), weight=1)
     janela_login.grid_rowconfigure(0, weight=1)
@@ -50,6 +56,5 @@ def main():
     janela_login.mainloop()
     print("Interface principal carregada com sucesso.")
 
-# Executa apenas se for o script principal
 if __name__ == "__main__":
     main()

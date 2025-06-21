@@ -24,6 +24,13 @@ def abrir_admin(janela_pai=None):
     janela_admin.geometry("800x600")
     janela_admin.resizable(False, False)
 
+    def ao_fechar():
+        if janela_pai:
+            janela_pai.deiconify()
+        janela_admin.destroy()
+
+    janela_admin.protocol("WM_DELETE_WINDOW", ao_fechar)
+
     frame_topo = customtkinter.CTkFrame(janela_admin)
     frame_topo.pack(padx=10, pady=10, fill="x")
 
@@ -142,4 +149,5 @@ def abrir_admin(janela_pai=None):
             customtkinter.CTkButton(janela_detalhes, text="Reabrir Chamado", command=reabrir_chamado).pack(pady=5)
 
     carregar_lista()
-    janela_admin.mainloop() if not janela_pai else None
+    if not janela_pai:
+        janela_admin.mainloop()
