@@ -1,3 +1,54 @@
-
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 *.pyc
+*.so
+*.egg-info/
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg
+*.log
+
+# VSCode
+.vscode/
+
+# Tkinter/CustomTkinter cache
+*.tcl
+
+# Mac / Linux / Windows
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# SQLite (se quiser ignorar o banco local)
+*.db
+*.sqlite3
+
+# PyInstaller
+*.spec
+*.exe
+*.dll
+*.manifest
+*.app
+*.pkg
+output/
+dist/
+
+# IDEs
+.idea/
+*.iml
