@@ -1,7 +1,5 @@
 ✅ README.md para o projeto Help Desk - Cia do Terno
 markdown
-Copiar
-Editar
 # 🛠️ Help Desk - Cia do Terno
 
 Sistema de Help Desk desenvolvido em Python com interface gráfica usando [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) e banco de dados SQLite.
